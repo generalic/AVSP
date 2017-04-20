@@ -1,3 +1,6 @@
+# ignore sprut input files
+sprut*
+
 # ignore files in data/ and parsed/ directories
 data/
 parsed/
