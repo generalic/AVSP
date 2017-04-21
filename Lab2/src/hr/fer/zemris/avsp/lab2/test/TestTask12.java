@@ -43,8 +43,8 @@ public class TestTask12 {
             getStream2(),
             (a, b) -> a.getKey() - b.getKey() + a.getValue() - b.getValue()
         )
-        .distinct()
-        .forEach(System.out::println);
+            .distinct()
+            .forEach(System.out::println);
     }
 
     private static Stream<Map.Entry<Integer, Integer>> getStream1() {
@@ -55,7 +55,6 @@ public class TestTask12 {
             int b = Integer.parseInt(br.readLine());
 
             int limit = (int) Math.floor(s * n);
-
 
             // normal sequential solution
             List<int[]> boxes = new ArrayList<>(n);
@@ -70,7 +69,7 @@ public class TestTask12 {
                     int number = Integer.parseInt(split[j]);
                     numbers[j] = number;
 
-                    items.compute(number, (k, v) -> Objects.isNull(v) ? 1 : v++);
+                    items.compute(number, (k, v) -> Objects.isNull(v) ? 1 : ++v);
                 }
 
                 boxes.add(numbers);
@@ -80,17 +79,18 @@ public class TestTask12 {
             System.out.println(boxes.size());
             System.out.println(items.size());
 
-            return items.entrySet()
+            return items
+                //.values()
+                .entrySet()
                 .stream()
+                //.sorted();
                 .sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()));
-
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return null;
-
     }
 
     private static Stream<Map.Entry<Integer, Integer>> getStream2() {
@@ -103,26 +103,26 @@ public class TestTask12 {
             int limit = (int) Math.floor(s * n);
 
             // streams solution sequential and parallel
-            //List<int[]> boxes2 = br.lines()
-            //    .parallel()
-                //.map(l -> Arrays.stream(l.split("\\s+")).mapToInt(Integer::parseInt).toArray())
-                //.collect(Collectors.toList());
+            List<int[]> boxes2 = br.lines()
+                //.parallel()
+                .map(l -> Arrays.stream(l.split("\\s+")).mapToInt(Integer::parseInt).toArray())
+                .collect(Collectors.toList());
 
-            List<int[]> boxes2 = new ArrayList<>();
-
-            for (int i = 0; i < n; i++) {
-                String line = br.readLine();
-                String[] split = line.split("\\s+");
-                int[] numbers = new int[split.length];
-
-                for (int j = 0; j < numbers.length; j++) {
-                    int number = Integer.parseInt(split[j]);
-                    numbers[j] = number;
-
-                }
-
-                boxes2.add(numbers);
-            }
+            //List<int[]> boxes2 = new ArrayList<>();
+            //
+            //for (int i = 0; i < n; i++) {
+            //    String line = br.readLine();
+            //    String[] split = line.split("\\s+");
+            //    int[] numbers = new int[split.length];
+            //
+            //    for (int j = 0; j < numbers.length; j++) {
+            //        int number = Integer.parseInt(split[j]);
+            //        numbers[j] = number;
+            //
+            //    }
+            //
+            //    boxes2.add(numbers);
+            //}
 
             Map<Integer, Integer> items2 = boxes2
                 .stream()
@@ -141,8 +141,11 @@ public class TestTask12 {
             System.out.println(boxes2.size());
             System.out.println(items2.size());
 
-            return items2.entrySet()
+            return items2
+                //.values()
+                .entrySet()
                 .stream()
+                //.sorted();
                 .sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()));
 
         } catch (IOException e) {
@@ -150,7 +153,6 @@ public class TestTask12 {
         }
 
         return null;
-
     }
 
     private static void compareResult(List<Integer> out) {

@@ -15,9 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  * Created by generalic on 21/04/17.
@@ -43,13 +41,13 @@ public class TestTask1 {
         Utils.zip(
             getStream1(),
             getStream2(),
-            (a, b) -> a - b
+            (a, b) -> a.getKey() - b.getKey() + a.getValue() - b.getValue()
         )
-        .distinct()
-        .forEach(System.out::println);
+            .distinct()
+            .forEach(System.out::println);
     }
 
-    private static Stream<Integer> getStream1() {
+    private static Stream<Map.Entry<Integer, Integer>> getStream1() {
         Path path = Paths.get("data/R.in");
         try (BufferedReader br = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             int n = Integer.parseInt(br.readLine());
@@ -58,10 +56,9 @@ public class TestTask1 {
 
             int limit = (int) Math.floor(s * n);
 
-
             // normal sequential solution
             List<int[]> boxes = new ArrayList<>(n);
-            //Map<Integer, Integer> items = new HashMap<>();
+            Map<Integer, Integer> items = new HashMap<>();
 
             for (int i = 0; i < n; i++) {
                 String line = br.readLine();
@@ -72,46 +69,31 @@ public class TestTask1 {
                     int number = Integer.parseInt(split[j]);
                     numbers[j] = number;
 
-                    //items.compute(number, (k, v) -> Objects.isNull(v) ? 1 : v++);
+                    items.compute(number, (k, v) -> Objects.isNull(v) ? 1 : ++v);
                 }
 
                 boxes.add(numbers);
             }
-
-            Map<Integer, Integer> items = boxes
-                .stream()
-                //.parallelStream()
-                .flatMapToInt(Arrays::stream)
-                .boxed()
-                .collect(
-                    Collectors.toMap(
-                        Function.identity(),
-                        w -> 1,
-                        Integer::sum
-                    )
-                );
 
             System.out.println("Stream normal");
             System.out.println(boxes.size());
             System.out.println(items.size());
 
             return items
-                .values()
-                //.entrySet()
+                //.values()
+                .entrySet()
                 .stream()
-                .sorted();
-                //.sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()));
-
+                //.sorted();
+            .sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()));
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return null;
-
     }
 
-    private static Stream<Integer> getStream2() {
+    private static Stream<Map.Entry<Integer, Integer>> getStream2() {
         Path path = Paths.get("data/R.in");
         try (BufferedReader br = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             int n = Integer.parseInt(br.readLine());
@@ -160,18 +142,17 @@ public class TestTask1 {
             System.out.println(items2.size());
 
             return items2
-                .values()
-                //.entrySet()
+                //.values()
+                .entrySet()
                 .stream()
-                .sorted();
-                //.sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()));
+                //.sorted();
+            .sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()));
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return null;
-
     }
 
     private static void compareResult(List<Integer> out) {
