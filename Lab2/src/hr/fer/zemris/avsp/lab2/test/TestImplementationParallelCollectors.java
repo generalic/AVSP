@@ -11,11 +11,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,7 +20,7 @@ import java.util.stream.Stream;
 /**
  * Created by generalic on 21/04/17.
  */
-public class TestImplementationParallel {
+public class TestImplementationParallelCollectors {
     public static void main(String[] args) {
         long t1 = System.nanoTime();
 
@@ -65,11 +62,11 @@ public class TestImplementationParallel {
                 );
 
             final int numItems = items.size();
-            Map<Integer, Integer> buckets = new ConcurrentHashMap<>();
 
-            boxes
+            Map<Integer, Integer> buckets = boxes
                 .parallelStream()
-                .forEach(box -> {
+                .flatMap(box -> {
+                    List<Integer> keys = new ArrayList<>();
                     for (int i = 0; i < box.length; i++) {
                         int x = box[i];
                         int xCount = items.get(x);
@@ -81,18 +78,26 @@ public class TestImplementationParallel {
                             int yCount = items.get(y);
 
                             if (yCount >= limit) {
-                                final int key = (x * numItems + y) % numBuckets;
-                                buckets.compute(key, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                                int key = (x * numItems + y) % numBuckets;
+                                keys.add(key);
                             }
                         }
                     }
-                });
+                    return keys.stream();
+                })
+                .filter(i -> i >= 0)
+                .collect(
+                    Collectors.toMap(
+                        Function.identity(),
+                        v -> 1,
+                        Integer::sum
+                    )
+                );
 
-            Map<Pair, Integer> pairs = new ConcurrentHashMap<>();
-
-            boxes
+            Map<Pair, Integer> pairs = boxes
                 .parallelStream()
-                .forEach(box -> {
+                .flatMap(box -> {
+                    List<Pair> pairsInBox = new ArrayList<>();
                     for (int i = 0; i < box.length; i++) {
                         int x = box[i];
                         int xCount = items.get(x);
@@ -106,12 +111,21 @@ public class TestImplementationParallel {
                                 final int key = (x * numItems + y) % numBuckets;
                                 if (buckets.get(key) >= limit) {
                                     Pair pair = new Pair(x, y);
-                                    pairs.compute(pair, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                                    pairsInBox.add(pair);
                                 }
                             }
                         }
                     }
-                });
+                    return pairsInBox.stream();
+                })
+                .filter(p -> !p.equals(Pair.EMPTY))
+                .collect(
+                    Collectors.toMap(
+                        Function.identity(),
+                        w -> 1,
+                        Integer::sum
+                    )
+                );
 
             final long numFrequentItems = items.values()
                 .stream()
@@ -130,7 +144,6 @@ public class TestImplementationParallel {
                 .forEach(out::add);
 
             compareResult(out);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
