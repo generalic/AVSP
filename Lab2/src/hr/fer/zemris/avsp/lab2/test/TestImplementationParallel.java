@@ -46,14 +46,13 @@ public class TestImplementationParallel {
 
             int limit = (int) Math.floor(s * n);
 
-            // streams solution sequential and parallel
+            // streams solution parallel
             List<int[]> boxes = br.lines()
                 .parallel()
                 .map(l -> Arrays.stream(l.split("\\s+")).mapToInt(Integer::parseInt).toArray())
                 .collect(Collectors.toList());
 
             Map<Integer, Integer> items = boxes
-                //.stream()
                 .parallelStream()
                 .flatMapToInt(Arrays::stream)
                 .boxed()

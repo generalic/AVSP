@@ -50,30 +50,86 @@ public class TestCollectorParallel {
                 //.parallel()
                 .map(l -> Arrays.stream(l.split("\\s+")).mapToInt(Integer::parseInt).toArray())
                 .collect(Collectors.toList());
-
-            //Map<Integer, Integer> items = boxes
-            //    //.stream()
-            //    .parallelStream()
-            //    .flatMapToInt(Arrays::stream)
-            //    .boxed()
-            //    .collect(
-            //        Collectors.toMap(
-            //            Function.identity(),
-            //            w -> 1,
-            //            Integer::sum
-            //        )
-            //    );
-
-            boxes
+            
+            Map<Integer, Integer> items = boxes
                 //.stream()
                 .parallelStream()
                 .flatMapToInt(Arrays::stream)
                 .boxed()
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList())
-                .forEach(System.out::println);
+                .collect(
+                    Collectors.toMap(
+                        Function.identity(),
+                        w -> 1,
+                        Integer::sum
+                    )
+                );
 
+            final int numItems = items.size();
+            Map<Integer, Integer> buckets = new ConcurrentHashMap<>();
+
+            boxes
+                .parallelStream()
+                .forEach(box -> {
+                    for (int i = 0; i < box.length; i++) {
+                        int x = box[i];
+                        int xCount = items.get(x);
+                        if (xCount < limit) {
+                            continue;
+                        }
+                        for (int j = i + 1; j < box.length; j++) {
+                            int y = box[j];
+                            int yCount = items.get(y);
+
+                            if (yCount >= limit) {
+                                final int key = (x * numItems + y) % numBuckets;
+                                buckets.compute(key, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                            }
+                        }
+                    }
+                });
+
+            Map<Pair, Integer> pairs = new ConcurrentHashMap<>();
+
+            boxes
+                .parallelStream()
+                .forEach(box -> {
+                    for (int i = 0; i < box.length; i++) {
+                        int x = box[i];
+                        int xCount = items.get(x);
+                        if (xCount < limit) {
+                            continue;
+                        }
+                        for (int j = i + 1; j < box.length; j++) {
+                            int y = box[j];
+                            int yCount = items.get(y);
+                            if (yCount >= limit) {
+                                final int key = (x * numItems + y) % numBuckets;
+                                if (buckets.get(key) >= limit) {
+                                    Pair pair = new Pair(x, y);
+                                    pairs.compute(pair, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                                }
+                            }
+                        }
+                    }
+                });
+
+            final long numFrequentItems = items.values()
+                .stream()
+                .filter(f -> f >= limit)
+                .count();
+
+            final int numAPrioriPairs = (int) (numFrequentItems * (numFrequentItems - 1) / 2);
+            final int numPCYPairs = pairs.size();
+
+            out.add(numAPrioriPairs);
+            out.add(numPCYPairs);
+
+            pairs.values()
+                .stream()
+                .sorted(Comparator.reverseOrder())
+                .forEach(out::add);
+
+            compareResult(out);
 
         } catch (IOException e) {
             e.printStackTrace();
