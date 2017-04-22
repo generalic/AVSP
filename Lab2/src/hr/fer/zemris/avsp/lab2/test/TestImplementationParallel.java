@@ -65,11 +65,11 @@ public class TestImplementationParallel {
                 );
 
             final int numItems = items.size();
-            Map<Integer, Integer> buckets = new ConcurrentHashMap<>();
 
-            boxes
-                .parallelStream()
-                .forEach(box -> {
+            Map<Integer, Integer> buckets = boxes
+                //.parallelStream()
+                .stream()
+                .map(box -> {
                     for (int i = 0; i < box.length; i++) {
                         int x = box[i];
                         int xCount = items.get(x);
@@ -81,18 +81,26 @@ public class TestImplementationParallel {
                             int yCount = items.get(y);
 
                             if (yCount >= limit) {
-                                final int key = (x * numItems + y) % numBuckets;
-                                buckets.compute(key, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                                return (x * numItems + y) % numBuckets;
                             }
                         }
                     }
-                });
+                    return Integer.MIN_VALUE;
+                })
+                .filter(p -> p != null)
+                .filter(i -> !i.equals(Integer.MIN_VALUE))
+                .collect(
+                    Collectors.toMap(
+                        Function.identity(),
+                        w -> 1,
+                        Integer::sum
+                    )
+                );
 
-            Map<Pair, Integer> pairs = new ConcurrentHashMap<>();
 
-            boxes
+            Map<Pair, Integer> pairs = boxes
                 .parallelStream()
-                .forEach(box -> {
+                .map(box -> {
                     for (int i = 0; i < box.length; i++) {
                         int x = box[i];
                         int xCount = items.get(x);
@@ -104,14 +112,27 @@ public class TestImplementationParallel {
                             int yCount = items.get(y);
                             if (yCount >= limit) {
                                 final int key = (x * numItems + y) % numBuckets;
-                                if (buckets.get(key) >= limit) {
-                                    Pair pair = new Pair(x, y);
-                                    pairs.compute(pair, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                                try {
+                                    if (buckets.get(key) >= limit) {
+                                        return new Pair(x, y);
+                                    }
+                                } catch (Exception npe) {
+                                    System.out.println(false);
                                 }
                             }
                         }
                     }
-                });
+                    return Pair.EMPTY;
+                })
+                .filter(p -> p != null)
+                .filter(p -> !p.equals(Pair.EMPTY))
+                .collect(
+                    Collectors.toMap(
+                        Function.identity(),
+                        w -> 1,
+                        Integer::sum
+                    )
+                );
 
             final long numFrequentItems = items.values()
                 .stream()
