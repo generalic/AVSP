@@ -11,11 +11,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,9 +64,9 @@ public class TestImplementationParallel {
             final int numItems = items.size();
 
             Map<Integer, Integer> buckets = boxes
-                //.parallelStream()
-                .stream()
-                .map(box -> {
+                .parallelStream()
+                .flatMap(box -> {
+                    List<Integer> keys = new ArrayList<>();
                     for (int i = 0; i < box.length; i++) {
                         int x = box[i];
                         int xCount = items.get(x);
@@ -81,26 +78,26 @@ public class TestImplementationParallel {
                             int yCount = items.get(y);
 
                             if (yCount >= limit) {
-                                return (x * numItems + y) % numBuckets;
+                                int key = (x * numItems + y) % numBuckets;
+                                keys.add(key);
                             }
                         }
                     }
-                    return Integer.MIN_VALUE;
+                    return keys.stream();
                 })
-                .filter(p -> p != null)
-                .filter(i -> !i.equals(Integer.MIN_VALUE))
+                .filter(i -> i >= 0)
                 .collect(
                     Collectors.toMap(
                         Function.identity(),
-                        w -> 1,
+                        v -> 1,
                         Integer::sum
                     )
                 );
 
-
             Map<Pair, Integer> pairs = boxes
                 .parallelStream()
-                .map(box -> {
+                .flatMap(box -> {
+                    List<Pair> pairsInBox = new ArrayList<>();
                     for (int i = 0; i < box.length; i++) {
                         int x = box[i];
                         int xCount = items.get(x);
@@ -112,19 +109,15 @@ public class TestImplementationParallel {
                             int yCount = items.get(y);
                             if (yCount >= limit) {
                                 final int key = (x * numItems + y) % numBuckets;
-                                try {
-                                    if (buckets.get(key) >= limit) {
-                                        return new Pair(x, y);
-                                    }
-                                } catch (Exception npe) {
-                                    System.out.println(false);
+                                if (buckets.get(key) >= limit) {
+                                    Pair pair = new Pair(x, y);
+                                    pairsInBox.add(pair);
                                 }
                             }
                         }
                     }
-                    return Pair.EMPTY;
+                    return pairsInBox.stream();
                 })
-                .filter(p -> p != null)
                 .filter(p -> !p.equals(Pair.EMPTY))
                 .collect(
                     Collectors.toMap(
@@ -151,7 +144,6 @@ public class TestImplementationParallel {
                 .forEach(out::add);
 
             compareResult(out);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
