@@ -68,15 +68,14 @@ public class TestImplementation {
                 for (int i = 0; i < box.length; i++) {
                     int x = box[i];
                     int xCount = items.get(x);
-                    // TODO: 21/04/17 gettas si predmet x i onda provjeri dal je van limita
-                    // TODO: 21/04/17 ako je continue s tim si bus ustedil da ides po polju ako si na pocetku npr7
                     if (xCount < limit) {
                         continue;
                     }
                     for (int j = i + 1; j < box.length; j++) {
                         int y = box[j];
                         int yCount = items.get(y);
-                        if (xCount >= limit && yCount >= limit) {
+
+                        if (yCount >= limit) {
                             final int key = (x * numItems + y) % numBuckets;
                             buckets.compute(key, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
                         }
@@ -90,15 +89,13 @@ public class TestImplementation {
                 for (int i = 0; i < box.length; i++) {
                     int x = box[i];
                     int xCount = items.get(x);
-                    // TODO: 21/04/17 gettas si predmet x i onda provjeri dal je van limita
-                    // TODO: 21/04/17 ako je continue s tim si bus ustedil da ides po polju ako si na pocetku npr7
                     if (xCount < limit) {
                         continue;
                     }
                     for (int j = i + 1; j < box.length; j++) {
                         int y = box[j];
                         int yCount = items.get(y);
-                        if (xCount >= limit && yCount >= limit) {
+                        if (yCount >= limit) {
                             final int key = (x * numItems + y) % numBuckets;
                             if (buckets.get(key) >= limit) {
                                 Pair pair = new Pair(x, y);
@@ -117,9 +114,6 @@ public class TestImplementation {
             final int numAPrioriPairs = (int) (numFrequentItems * (numFrequentItems - 1) / 2);
             final int numPCYPairs = pairs.size();
 
-            //System.out.println(numAPrioriPairs);
-            //System.out.println(numPCYPairs);
-
             out.add(numAPrioriPairs);
             out.add(numPCYPairs);
 
@@ -130,10 +124,6 @@ public class TestImplementation {
 
             compareResult(out);
 
-            System.out.println();
-            for (Integer integer : out) {
-                System.out.println(integer);
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
