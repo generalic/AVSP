@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,11 +20,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by generalic on 21/04/17.
+ * Created by generalic on 22/04/17.
  */
-public class TestImplementationParallel {
-    private static final String FILE_NAME = "R1";
-
+public class TestCollectorParallel {
     public static void main(String[] args) {
         long t1 = System.nanoTime();
 
@@ -40,7 +37,7 @@ public class TestImplementationParallel {
     private static void start() {
         List<Integer> out = new ArrayList<>();
 
-        Path path = Paths.get("data/" + FILE_NAME  + ".in");
+        Path path = Paths.get("data/R.in");
         try (BufferedReader br = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             int n = Integer.parseInt(br.readLine());
             double s = Double.parseDouble(br.readLine());
@@ -48,13 +45,14 @@ public class TestImplementationParallel {
 
             int limit = (int) Math.floor(s * n);
 
-            // streams solution parallel
+            // streams solution sequential and parallel
             List<int[]> boxes = br.lines()
-                .parallel()
+                //.parallel()
                 .map(l -> Arrays.stream(l.split("\\s+")).mapToInt(Integer::parseInt).toArray())
                 .collect(Collectors.toList());
-
+            
             Map<Integer, Integer> items = boxes
+                //.stream()
                 .parallelStream()
                 .flatMapToInt(Arrays::stream)
                 .boxed()
@@ -141,7 +139,7 @@ public class TestImplementationParallel {
     private static void compareResult(List<Integer> out) {
         System.out.println("Results are correct if there isn't any text after this line.");
         try {
-            Path resultPath = Paths.get("data/" + FILE_NAME  + ".out");
+            Path resultPath = Paths.get("data/R.out");
             Stream<Integer> resultList = Files.lines(resultPath)
                 .map(Integer::parseInt);
 
