@@ -1,5 +1,6 @@
 package hr.fer.zemris.avsp.lab2.test;
 
+import hr.fer.zemris.avsp.lab2.data.Bucket;
 import hr.fer.zemris.avsp.lab2.data.Pair;
 import hr.fer.zemris.avsp.lab2.util.Utils;
 import java.io.BufferedReader;
@@ -9,17 +10,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by generalic on 21/04/17.
+ * Created by generalic on 05/05/17.
  */
 public class TestImplementation {
+
+    private static final String FILE_NAME = "1";
+    private static final int SIZE_MULTIPLIER = 2;
+    private static final int ALLOWED_BUCKET_NUMBER = 2;
+
+    private static List<Bucket> buckets = new ArrayList<>();
+    private static int n;
+    private static long timer;
+    private static long maxSize = 1;
+    private static List<Integer> out = new ArrayList<>();
+
     public static void main(String[] args) {
         long t1 = System.nanoTime();
 
@@ -32,113 +41,126 @@ public class TestImplementation {
     }
 
     private static void start() {
-        List<Integer> out = new ArrayList<>();
+        Path path = Paths.get("data/" + FILE_NAME + ".in");
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            n = Integer.parseInt(reader.readLine());
 
-        Path path = Paths.get("data/R.in");
-        try (BufferedReader br = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            int n = Integer.parseInt(br.readLine());
-            double s = Double.parseDouble(br.readLine());
-            int numBuckets = Integer.parseInt(br.readLine());
-
-            int limit = (int) Math.floor(s * n);
-
-            // normal sequential solution
-            List<int[]> boxes = new ArrayList<>(n);
-            Map<Integer, Integer> items = new HashMap<>();
-
-            for (int i = 0; i < n; i++) {
-                String line = br.readLine();
-                String[] split = line.split("\\s+");
-                int[] numbers = new int[split.length];
-
-                for (int j = 0; j < numbers.length; j++) {
-                    int number = Integer.parseInt(split[j]);
-                    numbers[j] = number;
-
-                    items.compute(number, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
-                }
-
-                boxes.add(numbers);
-            }
-
-            final int numItems = items.size();
-            Map<Integer, Integer> buckets = new HashMap<>();
-
-            for (int[] box : boxes) {
-                for (int i = 0; i < box.length; i++) {
-                    int x = box[i];
-                    int xCount = items.get(x);
-                    if (xCount < limit) {
-                        continue;
+            String line;
+            while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                line = line.trim();
+                if (line.startsWith("q")) {
+                    // TODO: 08/05/17 query
+                    final int k = Integer.parseInt(line.split("\\s+")[1]);
+                    if (line.equals("q 94")) {
+                        int a = 2;
                     }
-                    for (int j = i + 1; j < box.length; j++) {
-                        int y = box[j];
-                        int yCount = items.get(y);
-
-                        if (yCount >= limit) {
-                            final int key = (x * numItems + y) % numBuckets;
-                            buckets.compute(key, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
+                    resolveQuery(k);
+                } else {
+                    // TODO: 08/05/17 stream data
+                    char[] bits = line.toCharArray();
+                    for (int i = 0; i < bits.length; i++) {
+                        if (i == bits.length - 2) {
+                            int kk = 55;
                         }
-                    }
-                }
-            }
-
-            Map<Pair, Integer> pairs = new HashMap<>();
-
-            for (int[] box : boxes) {
-                for (int i = 0; i < box.length; i++) {
-                    int x = box[i];
-                    int xCount = items.get(x);
-                    if (xCount < limit) {
-                        continue;
-                    }
-                    for (int j = i + 1; j < box.length; j++) {
-                        int y = box[j];
-                        int yCount = items.get(y);
-                        if (yCount >= limit) {
-                            final int key = (x * numItems + y) % numBuckets;
-                            if (buckets.get(key) >= limit) {
-                                Pair pair = new Pair(x, y);
-                                pairs.compute(pair, (k, v) -> Objects.isNull(v) ? 1 : v + 1);
-                            }
+                        char c = bits[i];
+                        removeOldBuckets();
+                        if (c == '1') {
+                            Bucket bucket = new Bucket(timer);
+                            buckets.add(bucket);
+                            mergeBuckets();
                         }
+                        timer++;
                     }
                 }
             }
 
-            final long numFrequentItems = items.values()
-                .stream()
-                .filter(f -> f >= limit)
-                .count();
-
-            final int numAPrioriPairs = (int) (numFrequentItems * (numFrequentItems - 1) / 2);
-            final int numPCYPairs = pairs.size();
-
-            out.add(numAPrioriPairs);
-            out.add(numPCYPairs);
-
-            pairs.values()
-                .stream()
-                .sorted(Comparator.reverseOrder())
-                .forEach(out::add);
-
+            //out.forEach(System.out::println);
             compareResult(out);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private static void resolveQuery(int k) {
+        List<Bucket> candidates = buckets.stream()
+            .filter(b -> b.getTimestamp() > (timer - k))
+            .collect(Collectors.toList());
+
+        if (candidates.isEmpty()) {
+            out.add(0);
+            return;
+        }
+
+        Bucket last = candidates.get(0);
+        int sum = last.getSize() / 2;
+
+        if (candidates.size() == 1) {
+            return;
+        }
+
+        for (int i = 1, n = candidates.size(); i < n; i++) {
+            sum += candidates.get(i).getSize();
+        }
+
+        out.add(sum);
+    }
+
+    private static void mergeBuckets() {
+        for (int size = 1; size <= maxSize; size *= SIZE_MULTIPLIER) {
+            final int currentSize = size;
+            List<Bucket> layer = buckets.stream()
+                .filter(b -> b.getSize() == currentSize)
+                .collect(Collectors.toList());
+
+            if (layer.size() > ALLOWED_BUCKET_NUMBER) {
+                Bucket newestBucket = layer.get(2);
+
+                Bucket oldBucket = layer.get(1);
+                long newTimestamp = oldBucket.getTimestamp();
+                int newSize = oldBucket.getSize() * SIZE_MULTIPLIER;
+                maxSize = newSize;
+
+                Bucket mergedBucket = new Bucket(newTimestamp, newSize);
+
+                buckets.add(buckets.indexOf(newestBucket), mergedBucket);
+                buckets.remove(layer.get(0));
+                buckets.remove(layer.get(1));
+            }
+        }
+    }
+
+    private static void removeOldBuckets() {
+        buckets = buckets.stream()
+            .filter(bucket -> bucket.getTimestamp() >= timer - n)
+            .collect(Collectors.toList());
+
+        int a = 30;
+    }
+
     private static void compareResult(List<Integer> out) {
         System.out.println("Results are correct if there isn't any text after this line.");
         try {
-            Path resultPath = Paths.get("data/R.out");
+            Path resultPath = Paths.get("data/" + FILE_NAME + ".out");
             Stream<Integer> resultList = Files.lines(resultPath)
                 .map(Integer::parseInt);
 
-            Utils.zip(out.stream(), resultList, (a, b) -> a - b)
-                .distinct()
-                .forEach(System.out::println);
+            //Utils.zip(out.stream(), resultList, (a, b) -> a - b)
+            //    .distinct()
+            //    .forEach(System.out::println);
+
+            List<Pair> pairs = Utils.zip(out.stream(), resultList, Pair::new)
+                .collect(Collectors.toList());
+
+            for (Pair pair : pairs) {
+                System.out.println(pair);
+            }
+
+
+            //List<Pair> diff = pairs.stream()
+            //    .filter(p -> p.getA() != p.getB())
+            //    .collect(Collectors.toList());
+            //
+            //System.out.println(diff.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
