@@ -10,12 +10,22 @@ import java.util.List;
 public class ListinsertTest {
     public static void main(String[] args) {
         List<Integer> list = new ArrayList<>();
-        list.add(1);
+        list.add(4);
         list.add(2);
-        list.add(3);
+        list.add(1);
+        list.add(1);
+        list.add(1);
 
-        list.add(2, 55);
+        list.add(4, 55);
 
+        for (int i : list) {
+            System.out.print(i + ",");
+        }
+
+        list.remove(2);
+        list.remove(2);
+
+        System.out.println();
         for (int i : list) {
             System.out.print(i + ",");
         }

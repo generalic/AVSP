@@ -51,17 +51,11 @@ public class TestImplementation {
                 if (line.startsWith("q")) {
                     // TODO: 08/05/17 query
                     final int k = Integer.parseInt(line.split("\\s+")[1]);
-                    if (line.equals("q 94")) {
-                        int a = 2;
-                    }
                     resolveQuery(k);
                 } else {
                     // TODO: 08/05/17 stream data
                     char[] bits = line.toCharArray();
                     for (int i = 0; i < bits.length; i++) {
-                        if (i == bits.length - 2) {
-                            int kk = 55;
-                        }
                         char c = bits[i];
                         removeOldBuckets();
                         if (c == '1') {
@@ -69,7 +63,6 @@ public class TestImplementation {
                             buckets.add(bucket);
                             mergeBuckets();
                         }
-                        timer++;
                     }
                 }
             }
@@ -130,11 +123,11 @@ public class TestImplementation {
     }
 
     private static void removeOldBuckets() {
-        buckets = buckets.stream()
-            .filter(bucket -> bucket.getTimestamp() >= timer - n)
-            .collect(Collectors.toList());
+        List<Bucket> dropList = buckets.stream()
+            .filter(b -> timer - b.getTimestamp() == n) // timer - bittimestamp == n --> drop
+        .collect(Collectors.toList());
 
-        int a = 30;
+        buckets.removeAll(dropList);
     }
 
     private static void compareResult(List<Integer> out) {
@@ -154,7 +147,6 @@ public class TestImplementation {
             for (Pair pair : pairs) {
                 System.out.println(pair);
             }
-
 
             //List<Pair> diff = pairs.stream()
             //    .filter(p -> p.getA() != p.getB())
