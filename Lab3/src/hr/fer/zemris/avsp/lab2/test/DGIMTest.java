@@ -1,7 +1,6 @@
 package hr.fer.zemris.avsp.lab2.test;
 
 import hr.fer.zemris.avsp.lab2.data.Bucket;
-import hr.fer.zemris.avsp.lab2.data.Pair;
 import hr.fer.zemris.avsp.lab2.util.Utils;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +18,7 @@ import java.util.stream.Stream;
  * Created by generalic on 12/05/17.
  * lab3
  */
-public class DGIM {
+public class DGIMTest {
 
     private static final String FILE_NAME = "1";
     private static final int SIZE_MULTIPLIER = 2;
@@ -32,7 +31,7 @@ public class DGIM {
 
     private List<Integer> out;
 
-    public DGIM() {
+    public DGIMTest() {
         this.buckets = new ArrayList<>();
         this.timer = 0;
         this.out = new ArrayList<>();
@@ -45,30 +44,33 @@ public class DGIM {
             Stream<Integer> resultList = Files.lines(resultPath)
                 .map(Integer::parseInt);
 
-            //Utils.zip(out.stream(), resultList, (a, b) -> a - b)
-            //    .distinct()
-            //    .forEach(System.out::println);
-
-            List<Pair> pairs = Utils.zip(out.stream(), resultList, Pair::new)
-                .collect(Collectors.toList());
-
-            for (Pair pair : pairs) {
-                System.out.println(pair);
-            }
-
-            System.out.println();
-            System.out.println();
-
-            pairs.stream()
-                .map(p -> p.getA() - p.getB())
+            Utils.zip(out.stream(), resultList, (a, b) -> a - b)
                 .distinct()
                 .forEach(System.out::println);
 
-            List<Pair> diff = pairs.stream()
-                .filter(p -> p.getA() != p.getB())
-                .collect(Collectors.toList());
-
-            System.out.println(diff.size());
+            //List<Pair> pairs = Utils.zip(out.stream(), resultList, Pair::new)
+            //    .collect(Collectors.toList());
+            //
+            //for (Pair pair : pairs) {
+            //    System.out.println(pair);
+            //}
+            //
+            //System.out.println();
+            //out.forEach(System.out::println);
+            //
+            //System.out.println();
+            //System.out.println();
+            //
+            //pairs.stream()
+            //    .map(p -> p.getA() - p.getB())
+            //    .distinct()
+            //    .forEach(System.out::println);
+            //
+            //List<Pair> diff = pairs.stream()
+            //    .filter(p -> p.getA() != p.getB())
+            //    .collect(Collectors.toList());
+            //
+            //System.out.println(diff.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -77,7 +79,7 @@ public class DGIM {
     public static void main(String[] args) {
         long t1 = System.nanoTime();
 
-        DGIM dgim = new DGIM();
+        DGIMTest dgim = new DGIMTest();
         dgim.start();
 
         long t2 = System.nanoTime();
@@ -172,7 +174,6 @@ public class DGIM {
                 }
             }
 
-            //out.forEach(System.out::println);
             compareResult(out);
         } catch (IOException e) {
             e.printStackTrace();
