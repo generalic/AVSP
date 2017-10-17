@@ -1,0 +1,44 @@
+group 'hr.fer.zemris.avsp'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir 'src'
+    }
+    resources {
+      srcDir 'src/resources'
+      include '*.properties'
+      output.resourcesDir = 'build/resources/main'
+    }
+  }
+
+  test {
+    java {
+      srcDir 'test'
+    }
+  }
+}
+
+dependencies {
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+
+  compile group: 'commons-codec', name: 'commons-codec', version: '1.10'
+  compile group: 'commons-io', name: 'commons-io', version: '2.5'
+}
+
+jar {
+  manifest {
+    attributes 'Main-Class': 'com.generalic.snparser.test.Main'
+  }
+}
